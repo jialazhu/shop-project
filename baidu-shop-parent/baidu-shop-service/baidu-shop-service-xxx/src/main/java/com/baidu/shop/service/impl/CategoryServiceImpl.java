@@ -60,11 +60,12 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
     @Transactional
     @Override
     public Result<JSONObject> deleteCategory(Integer id) {
+        if (null == id && id == 0) { // 为null.说明没有数据.id无效
+            return this.setResultError("id无效");
+        }
         //通过id查询是否有数据.
         CategoryEntity categoryEntity = categoryMapper.selectByPrimaryKey(id);
-        if (null == categoryEntity) { // 为null.说明没有数据.id无效
-            return this.setResultError("没有相关数据");
-        }
+
         //判断数据是否是父节点
         if(categoryEntity.getIsParent() == 1){
             return this.setResultError("不能删除父节点");
