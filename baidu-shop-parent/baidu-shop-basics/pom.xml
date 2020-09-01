@@ -18,6 +18,7 @@
     <modules>
         <module>baidu-shop-basic-eureka-server</module>
         <module>mingrui-shop-basic-zuul-serer</module>
+        <module>mingrui-shop-basic-upload-server</module>
     </modules>
 
 </project>
