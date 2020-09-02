@@ -6,6 +6,7 @@ import com.baidu.shop.entity.CategoryEntity;
 import com.baidu.shop.mapper.CategoryMapper;
 import com.baidu.shop.service.BaseApiService;
 import com.baidu.shop.service.CategoryService;
+import com.baidu.shop.utils.ObjectUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
@@ -60,16 +61,12 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
     @Transactional
     @Override
     public Result<JSONObject> deleteCategory(Integer id) {
-        if (null == id && id == 0) { // 为null.说明没有数据.id无效
-            return this.setResultError("id无效");
-        }
+        // 为null.说明没有数据.id无效
+        if (ObjectUtil.isNull(id) && id == 0)  return this.setResultError("id无效");
         //通过id查询是否有数据.
         CategoryEntity categoryEntity = categoryMapper.selectByPrimaryKey(id);
-
         //判断数据是否是父节点
-        if(categoryEntity.getIsParent() == 1){
-            return this.setResultError("不能删除父节点");
-        }
+        if(categoryEntity.getIsParent() == 1)  return this.setResultError("不能删除父节点");
         //通过查询出的数据的parentid查询当前节点 父节点 的 子节点 数量
         Example example = new Example(CategoryEntity.class);
         Example.Criteria criteria = example.createCriteria();
@@ -86,5 +83,11 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
         //删除
         categoryMapper.deleteByPrimaryKey(id);
         return this.setResultSuccess();
+    }
+
+    @Override
+    public Result<List<CategoryEntity>> getbyBrand(Integer brandId) {
+        List<CategoryEntity> list = categoryMapper.getbyBrand(brandId);
+        return this.setResultSuccess(list);
     }
 }
