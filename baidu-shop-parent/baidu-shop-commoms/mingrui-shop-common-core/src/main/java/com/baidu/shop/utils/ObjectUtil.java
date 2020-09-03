@@ -1,5 +1,7 @@
 package com.baidu.shop.utils;
 
+import java.util.List;
+
 /**
  * @ClassName ObjectUtil
  * @Description: TODO
@@ -15,5 +17,12 @@ public class ObjectUtil {
 
     public static Boolean isNotNull(Object obj){
         return null != obj;
+    }
+
+    public static Boolean isEmpty(List<?> obj){
+        return null == obj || obj.size() == 0;
+    }
+    public static Boolean isNotEmpty(List<?> obj){
+        return  obj != null && !obj.isEmpty();
     }
 }

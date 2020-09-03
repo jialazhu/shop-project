@@ -2,8 +2,12 @@ package com.baidu.shop.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baidu.shop.base.Result;
+import com.baidu.shop.entity.CategoryBrandEntity;
 import com.baidu.shop.entity.CategoryEntity;
+import com.baidu.shop.entity.SpecGroupEntity;
+import com.baidu.shop.mapper.CategoryBrandMapper;
 import com.baidu.shop.mapper.CategoryMapper;
+import com.baidu.shop.mapper.SpecGroupMapper;
 import com.baidu.shop.service.BaseApiService;
 import com.baidu.shop.service.CategoryService;
 import com.baidu.shop.utils.ObjectUtil;
@@ -27,6 +31,12 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
     @Resource
     private CategoryMapper categoryMapper;
 
+    @Resource
+    private CategoryBrandMapper categoryBrandMapper;
+
+    @Resource
+    private SpecGroupMapper specGroupMapper;
+
     @Override
     public Result<List<CategoryEntity>> getCategoryByPid(Integer pid) {
 
@@ -47,6 +57,7 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
         categoryEntity1.setId(categoryEntity.getParentId());
         categoryEntity1.setIsParent(1);
         categoryMapper.updateByPrimaryKeySelective(categoryEntity1);
+        //新增
         categoryMapper.insertSelective(categoryEntity);
         return this.setResultSuccess();
     }
@@ -67,6 +78,21 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
         CategoryEntity categoryEntity = categoryMapper.selectByPrimaryKey(id);
         //判断数据是否是父节点
         if(categoryEntity.getIsParent() == 1)  return this.setResultError("不能删除父节点");
+
+        // 通过分类的id查询 分类品牌关系表 返回list集合.
+        Example brandExample = new Example(CategoryBrandEntity.class);
+        brandExample.createCriteria().andEqualTo("categoryId",id);
+        List<CategoryBrandEntity> categoryBrandList = categoryBrandMapper.selectByExample(brandExample);
+        // 判断是否有关联数据 如果有 不能删除
+        if(ObjectUtil.isNotEmpty(categoryBrandList)) return this.setResultError("分类已绑定品牌.不能删除");
+
+        // 通过分类的id查询返回list集合 (按照常识是不用查询规格参数表 因为如果查询组表没有关联数据.说明分类就没有关联组.没有组就没有关联参数)
+        Example groupExample = new Example(SpecGroupEntity.class);
+        groupExample.createCriteria().andEqualTo("cid",id);
+        List<SpecGroupEntity> groupList = specGroupMapper.selectByExample(groupExample);
+        // 判断规格组表中是否有关联数据 如果有 不能被删除
+        if(ObjectUtil.isNotEmpty(groupList)) return this.setResultError("分类已绑定规格组.不能删除");
+
         //通过查询出的数据的parentid查询当前节点 父节点 的 子节点 数量
         Example example = new Example(CategoryEntity.class);
         Example.Criteria criteria = example.createCriteria();
