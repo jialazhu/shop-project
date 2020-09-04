@@ -8,11 +8,20 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka
 
+fdfs:
+  so-timeout: 1501
+  connect-timeout: 601
+  thumb-image: # 缩略图
+    width: 60
+    height: 60
+  tracker-list: # tracker地址
+    - 119.45.188.14:22122
+
 mingrui:
   upload:
     path:
       windows: D:\\feiq\\RecvFiles\\6_month\\shop\\images
-      linux: /jlz/images
+      linux: /jlz/upload/images
     img:
-      host: http://image.shop.com
+      host: http://119.45.188.14/
 
