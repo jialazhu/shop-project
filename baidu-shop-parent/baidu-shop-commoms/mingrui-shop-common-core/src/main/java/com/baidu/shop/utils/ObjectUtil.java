@@ -19,10 +19,5 @@ public class ObjectUtil {
         return null != obj;
     }
 
-    public static Boolean isEmpty(List<?> obj){
-        return null == obj || obj.size() == 0;
-    }
-    public static Boolean isNotEmpty(List<?> obj){
-        return  obj != null && !obj.isEmpty();
-    }
+
 }

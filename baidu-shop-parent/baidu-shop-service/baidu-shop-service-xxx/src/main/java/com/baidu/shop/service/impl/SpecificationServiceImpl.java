@@ -68,7 +68,7 @@ public class SpecificationServiceImpl extends BaseApiService implements Specific
         example.createCriteria().andEqualTo("groupId", id);
         List<SpecParamEntity> groupList = specParamMapper.selectByExample(example);
         //判断list如果不为空 则不能删除 直接return
-        if(ObjectUtil.isNotEmpty(groupList)) return this.setResultError("规格组中包含数据.无法删除");
+        if(!groupList.isEmpty()) return this.setResultError("规格组中包含数据.无法删除");
         //删除操作
         specGroupMapper.deleteByPrimaryKey(id);
         return this.setResultSuccess();
