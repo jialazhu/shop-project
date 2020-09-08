@@ -38,4 +38,5 @@ public class BrandDTO extends BaseDTO {
     @ApiModelProperty(value = "品牌分类")
     @NotNull(message = "品牌分类不能为空",groups = {MingruiOperation.Add.class})
     private String category;
+
 }

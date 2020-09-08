@@ -9,6 +9,7 @@ import com.baidu.shop.mapper.CategoryBrandMapper;
 import com.baidu.shop.service.BaseApiService;
 import com.baidu.shop.service.BrandService;
 import com.baidu.shop.utils.BeanUtil;
+import com.baidu.shop.utils.ObjectUtil;
 import com.baidu.shop.utils.PinyinUtil;
 import com.baidu.shop.utils.StringUtil;
 import com.github.pagehelper.PageHelper;
@@ -39,16 +40,26 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
     private CategoryBrandMapper categoryBrandMapper;
 
     @Override
-    public Result<List<BrandEntity>> select(BrandDTO brandDTO) {
+    public Result<List<BrandEntity>> getBrandByCate(Integer cid) {
+        if(ObjectUtil.isNull(cid)) return this.setResultError("cid不能为空");
+        List<BrandEntity> list = brandMapper.getBrandByCate(cid);
+        return this.setResultSuccess(list);
+    }
+
+    @Override
+    public Result<PageInfo<BrandEntity>> select(BrandDTO brandDTO) {
         // 分页
-        PageHelper.startPage(brandDTO.getPage(),brandDTO.getRows());
+        if(ObjectUtil.isNotNull(brandDTO.getPage()) && ObjectUtil.isNotNull(brandDTO.getRows()) )
+            PageHelper.startPage(brandDTO.getPage(),brandDTO.getRows());
         //条件查询
         Example example = new Example(BrandEntity.class);
+        Example.Criteria criteria = example.createCriteria();
         //排序
         if(StringUtil.isNotEmpty(brandDTO.getSort())) example.setOrderByClause(brandDTO.getOrderByClause());
+        // 根据id 查询
+        if(ObjectUtil.isNotNull(brandDTO.getId())) criteria.andEqualTo("id",brandDTO.getId());
         //根据name 模糊查询
-        if(StringUtil.isNotEmpty(brandDTO.getName())) example.createCriteria()
-                .andLike("name","%"+brandDTO.getName()+"%");
+        if(StringUtil.isNotEmpty(brandDTO.getName())) criteria.andLike("name","%"+brandDTO.getName()+"%");
         PageInfo<BrandEntity> pageInfo = new PageInfo<>(brandMapper.selectByExample(example));
         return this.setResultSuccess(pageInfo);
     }

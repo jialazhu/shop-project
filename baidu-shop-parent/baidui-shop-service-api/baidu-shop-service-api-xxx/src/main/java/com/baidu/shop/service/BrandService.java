@@ -4,6 +4,7 @@ import com.baidu.shop.base.Result;
 import com.baidu.shop.dto.BrandDTO;
 import com.baidu.shop.entity.BrandEntity;
 import com.baidu.shop.validate.group.MingruiOperation;
+import com.github.pagehelper.PageInfo;
 import com.google.gson.JsonObject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -18,7 +19,7 @@ public interface BrandService {
 
     @GetMapping("brand/list")
     @ApiOperation(value = "查询品牌")
-    Result<List<BrandEntity>> select(BrandDTO brandDTO);
+    Result<PageInfo<BrandEntity>> select(BrandDTO brandDTO);
 
     @PostMapping("brand/save")
     @ApiOperation(value = "新增品牌")
@@ -31,4 +32,8 @@ public interface BrandService {
     @DeleteMapping("brand/delete")
     @ApiOperation(value = "删除品牌")
     Result<List<BrandEntity>> delete(Integer id);
+
+    @GetMapping("brand/getBrandByCate")
+    @ApiOperation(value = "查询品牌")
+    Result<List<BrandEntity>> getBrandByCate(Integer cid);
 }
