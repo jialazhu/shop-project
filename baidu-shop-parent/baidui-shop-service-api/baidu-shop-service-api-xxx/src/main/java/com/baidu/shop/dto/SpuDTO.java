@@ -63,7 +63,7 @@ public class SpuDTO extends BaseDTO {
 
     private String brandName;
 
-    private String cateNames;
+    private String categoryName;
 
     @ApiModelProperty(value = "spu详细数据对象")
     private SpuDetailDTO spuDetail;
