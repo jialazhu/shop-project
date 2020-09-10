@@ -9,10 +9,7 @@ import com.github.pagehelper.PageInfo;
 import com.google.gson.JsonObject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -28,7 +25,7 @@ public interface GoodsService {
     Result<JsonObject> save(@RequestBody SpuDTO spuDTO);
 
     @PutMapping("goods/save")
-    @ApiOperation(value = "新增商品")
+    @ApiOperation(value = "修改商品")
     Result<JsonObject> edit(@RequestBody SpuDTO spuDTO);
 
     @GetMapping("goods/getSpuDetailBySpuId")
@@ -38,4 +35,12 @@ public interface GoodsService {
     @GetMapping("goods/getSkuAndStockBySpuId")
     @ApiOperation(value = "通过spuId查询Sku和Stock")
     Result<List<SkuDTO>> getSkuAndStockBySpuId(Integer spuId);
+
+    @DeleteMapping("goods/delete")
+    @ApiOperation(value = "通过spuId查询Sku和Stock")
+    Result<JsonObject> delete(Integer spuId);
+
+    @PutMapping("goods/editSaleable")
+    @ApiOperation(value = "修改上下架状态")
+    Result<JsonObject> editSaleable(@RequestBody SpuDTO spuDTO);
 }

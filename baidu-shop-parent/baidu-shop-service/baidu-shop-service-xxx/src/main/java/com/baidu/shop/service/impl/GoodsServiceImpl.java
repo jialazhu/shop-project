@@ -57,6 +57,24 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
 
     @Transactional
     @Override
+    public Result<JsonObject> editSaleable(SpuDTO spuDTO) {
+        spuMapper.updateByPrimaryKeySelective(BeanUtil.copyProperties(spuDTO,SpuEntity.class));
+        return this.setResultSuccess();
+    }
+
+    @Transactional
+    @Override
+    public Result<JsonObject> delete(Integer spuId) {
+        if(ObjectUtil.isNull(spuId)) return  this.setResultError("无效id");
+        spuMapper.deleteByPrimaryKey(spuId);
+        spuDetailMapper.deleteByPrimaryKey(spuId);
+        // 删除sku 和 stock
+        this.deleteSkusAndStocks(spuId);
+        return this.setResultSuccess();
+    }
+
+    @Transactional
+    @Override
     public Result<JsonObject> edit(SpuDTO spuDTO) {
         Date date = new Date();
         //修改spu
@@ -65,16 +83,8 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
         spuMapper.updateByPrimaryKeySelective(spuEntity);
         //修改spuDetail
         spuDetailMapper.updateByPrimaryKeySelective(BeanUtil.copyProperties(spuDTO.getSpuDetail(), SpuDetailEntity.class));
-        // 通过spuId查询出所有的sku 集合
-        Example example = new Example(SkuEntity.class);
-        example.createCriteria().andEqualTo("spuId",spuDTO.getId());
-        //遍历查询出来的sku集合获得skuId集合
-        List<Long> skuIdList = skuMapper.selectByExample(example)
-                .stream().map(sku -> sku.getId()).collect(Collectors.toList());
-        //删除sku
-        skuMapper.deleteByIdList(skuIdList);
-        //删除stock
-        stockMapper.deleteByIdList(skuIdList);
+        // 删除sku 和 stock
+        this.deleteSkusAndStocks(spuDTO.getId());
         //新增 sku 和 stock
         this.addSkusAndStocks(spuDTO.getSkus(),spuDTO.getId(),date);
 
@@ -173,5 +183,20 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
             stockEntity.setStock(skuDTO.getStock());
             stockMapper.insertSelective(stockEntity);
         });
+    }
+
+    private void deleteSkusAndStocks(Integer spuId){
+        // 通过spuId查询出所有的sku 集合
+        Example example = new Example(SkuEntity.class);
+        example.createCriteria().andEqualTo("spuId",spuId);
+        //遍历查询出来的sku集合获得skuId集合
+        List<Long> skuIdList = skuMapper.selectByExample(example)
+                .stream().map(sku -> sku.getId()).collect(Collectors.toList());
+        //删除sku
+        if(!skuIdList.isEmpty()){
+            skuMapper.deleteByIdList(skuIdList);
+            //删除stock
+            stockMapper.deleteByIdList(skuIdList);
+        }
     }
 }

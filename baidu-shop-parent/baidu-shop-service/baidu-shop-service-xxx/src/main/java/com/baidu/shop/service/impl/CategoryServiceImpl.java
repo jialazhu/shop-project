@@ -5,9 +5,11 @@ import com.baidu.shop.base.Result;
 import com.baidu.shop.entity.CategoryBrandEntity;
 import com.baidu.shop.entity.CategoryEntity;
 import com.baidu.shop.entity.SpecGroupEntity;
+import com.baidu.shop.entity.SpuEntity;
 import com.baidu.shop.mapper.CategoryBrandMapper;
 import com.baidu.shop.mapper.CategoryMapper;
 import com.baidu.shop.mapper.SpecGroupMapper;
+import com.baidu.shop.mapper.SpuMapper;
 import com.baidu.shop.service.BaseApiService;
 import com.baidu.shop.service.CategoryService;
 import com.baidu.shop.utils.ObjectUtil;
@@ -35,6 +37,9 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
 
     @Resource
     private SpecGroupMapper specGroupMapper;
+
+    @Resource
+    private SpuMapper spuMapper;
 
     @Override
     public Result<List<CategoryEntity>> getCategoryByPid(Integer pid) {
@@ -91,6 +96,12 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
         List<SpecGroupEntity> groupList = specGroupMapper.selectByExample(groupExample);
         // 判断规格组表中是否有关联数据 如果有 不能被删除
         if(!groupList.isEmpty()) return this.setResultError("分类已绑定规格组.不能删除");
+
+        //查询spu表中是否有关联数据
+        Example spuExample = new Example(SpuEntity.class);
+        spuExample.createCriteria().andEqualTo("cid3",id);
+        List<SpuEntity> spuEntities = spuMapper.selectByExample(spuExample);
+        if(!spuEntities.isEmpty()) return this.setResultError("分类已绑定spu, 不能删除");
 
         //通过查询出的数据的parentid查询当前节点 父节点 的 子节点 数量
         Example example = new Example(CategoryEntity.class);
