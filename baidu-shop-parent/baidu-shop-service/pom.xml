@@ -15,6 +15,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>baidu-shop-service-xxx</module>
+        <module>baidu-shop-service-search</module>
     </modules>
 
     <dependencies>
@@ -56,8 +57,6 @@
             <artifactId>baidu-shop-service-api-xxx</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-
-
     </dependencies>
 
 </project>

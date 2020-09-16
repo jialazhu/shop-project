@@ -4,11 +4,10 @@ import com.baidu.shop.base.Result;
 import com.baidu.shop.dto.SkuDTO;
 import com.baidu.shop.dto.SpuDTO;
 import com.baidu.shop.entity.SpuDetailEntity;
-import com.baidu.shop.entity.SpuEntity;
-import com.github.pagehelper.PageInfo;
 import com.google.gson.JsonObject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,7 +17,7 @@ public interface GoodsService {
 
     @GetMapping("goods/list")
     @ApiOperation(value = "查询商品")
-    Result<PageInfo<SpuEntity>> select(SpuDTO spuDTO);
+    Result<List<SpuDTO>> select(@SpringQueryMap SpuDTO spuDTO);
 
     @PostMapping("goods/save")
     @ApiOperation(value = "新增商品")
@@ -34,7 +33,7 @@ public interface GoodsService {
 
     @GetMapping("goods/getSkuAndStockBySpuId")
     @ApiOperation(value = "通过spuId查询Sku和Stock")
-    Result<List<SkuDTO>> getSkuAndStockBySpuId(Integer spuId);
+    Result<List<SkuDTO>> getSkuAndStockBySpuId(@RequestParam Integer spuId);
 
     @DeleteMapping("goods/delete")
     @ApiOperation(value = "通过spuId查询Sku和Stock")
