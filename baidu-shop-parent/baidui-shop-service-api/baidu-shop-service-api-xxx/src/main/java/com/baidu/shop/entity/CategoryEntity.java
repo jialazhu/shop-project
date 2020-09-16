@@ -10,6 +10,7 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
+
 /**
  * @program: baidu-shop-parent
  * @description: 实体类

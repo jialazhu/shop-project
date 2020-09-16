@@ -3,7 +3,6 @@ package com.baidu.shop.entity;
 import lombok.Data;
 
 import javax.persistence.Id;
-import javax.persistence.IdClass;
 import javax.persistence.Table;
 
 /**

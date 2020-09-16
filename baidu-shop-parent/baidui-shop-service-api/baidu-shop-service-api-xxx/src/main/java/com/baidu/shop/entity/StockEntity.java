@@ -1,7 +1,6 @@
 package com.baidu.shop.entity;
 
 import lombok.Data;
-import sun.util.calendar.LocalGregorianCalendar;
 
 import javax.persistence.Id;
 import javax.persistence.Table;
