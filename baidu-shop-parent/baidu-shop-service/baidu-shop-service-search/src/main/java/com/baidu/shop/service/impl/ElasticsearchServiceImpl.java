@@ -9,13 +9,17 @@ import com.baidu.shop.entity.SpecParamEntity;
 import com.baidu.shop.entity.SpuDetailEntity;
 import com.baidu.shop.feign.GoodsFeign;
 import com.baidu.shop.feign.SpecificationFeign;
+import com.baidu.shop.repository.MrElasticsearchRepository;
 import com.baidu.shop.service.BaseApiService;
 import com.baidu.shop.service.ElasticsearchService;
 import com.baidu.shop.status.HTTPStatus;
 import com.baidu.shop.utils.JSONUtil;
 import com.google.gson.JsonObject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -31,6 +35,7 @@ import java.util.Map;
  * @Version V1.0
  **/
 @RestController
+@Slf4j
 public class ElasticsearchServiceImpl extends BaseApiService implements ElasticsearchService {
 
     @Autowired
@@ -39,16 +44,49 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
     @Autowired
     private SpecificationFeign specificationFeign;
 
+    @Autowired
+    private ElasticsearchRestTemplate elasticsearchRestTemplate;
+
+    @Autowired
+    private MrElasticsearchRepository mrElasticsearchRepository;
+
     @Override
-    public Result<JsonObject> esGoodsInfo() {
+    public Result<JsonObject> cleanEsData() {
+        IndexOperations indexOperations = elasticsearchRestTemplate.indexOps(GoodsDoc.class);
+        if(indexOperations.exists()){
+            indexOperations.delete();
+            log.info("删除成功");
+        }
+        return this.setResultSuccess();
+    }
+
+    @Override
+    public Result<JsonObject> initEsData() {
+        IndexOperations indexOperations = elasticsearchRestTemplate.indexOps(GoodsDoc.class);
+        if(!indexOperations.exists()){
+            indexOperations.create();
+            log.info("索引创建成功");
+            indexOperations.createMapping();
+            log.info("映射创建成功");
+        }
+
+        List<GoodsDoc> goodsInfo = this.getGoodsInfo();
+//        elasticsearchRestTemplate.save(goodsInfo);
+        mrElasticsearchRepository.saveAll(goodsInfo);
+        return this.setResultSuccess();
+    }
+
+    private List<GoodsDoc> getGoodsInfo() {
         SpuDTO spuDTO = new SpuDTO();
         spuDTO.setPage(1);
         spuDTO.setRows(5);
         Result<List<SpuDTO>> spuResult = goodsFeign.select(spuDTO);
 
+        List<GoodsDoc> goodsDocs = new ArrayList<>();
+
         if(spuResult.getCode() == HTTPStatus.OK){
             List<SpuDTO> spuList = spuResult.getData();
-            List<GoodsDoc> goodsDocs = new ArrayList<>();
+
             // 遍历集合
             spuList.stream().forEach(spu->{
                 GoodsDoc goodsDoc = new GoodsDoc();
@@ -71,7 +109,7 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
                 goodsDocs.add(goodsDoc);
             });
         }
-        return this.setResultSuccess();
+        return goodsDocs;
     }
 
     private Map<List<Long>,List<Map<String, Object>>> getPriceAndSkus(Integer spuId){

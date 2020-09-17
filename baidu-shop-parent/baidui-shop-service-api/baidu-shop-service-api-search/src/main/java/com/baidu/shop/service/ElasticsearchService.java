@@ -9,7 +9,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Api(tags = "es接口")
 public interface ElasticsearchService {
 
-    @ApiOperation(value = "获取商品测试")
-    @GetMapping("es/goodsInfo")
-    Result<JsonObject> esGoodsInfo();
+    @ApiOperation(value = "删除索引数据")
+    @GetMapping("es/cleanEsData")
+    Result<JsonObject> cleanEsData();
+
+    @ApiOperation(value = "创建索引数据")
+    @GetMapping("es/initEsData")
+    Result<JsonObject> initEsData();
 }
