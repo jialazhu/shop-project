@@ -9,6 +9,7 @@ import com.baidu.shop.validate.group.MingruiOperation;
 import com.google.gson.JsonObject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,7 +36,7 @@ public interface SpecificationService {
 
     @GetMapping("specification/listParam")
     @ApiOperation(value = "查询品牌规格参数")
-    Result<List<SpecParamEntity>> selectParam(SpecParamDTO specParamDTO);
+    Result<List<SpecParamEntity>> selectParam(@SpringQueryMap SpecParamDTO specParamDTO);
 
     @PostMapping("specification/saveParam")
     @ApiOperation(value = "新增品牌规格参数")
