@@ -13,19 +13,29 @@ import com.baidu.shop.repository.MrElasticsearchRepository;
 import com.baidu.shop.service.BaseApiService;
 import com.baidu.shop.service.ElasticsearchService;
 import com.baidu.shop.status.HTTPStatus;
+import com.baidu.shop.utils.ESHighLightUtil;
 import com.baidu.shop.utils.JSONUtil;
+import com.baidu.shop.utils.ObjectUtil;
+import com.baidu.shop.utils.StringUtil;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.similarity.ScriptedSimilarity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.IndexOperations;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @ClassName ElasticsearchServiceImpl
@@ -49,6 +59,25 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
 
     @Autowired
     private MrElasticsearchRepository mrElasticsearchRepository;
+
+    @Override
+    public Result<List<GoodsDoc>> search(String search) {
+        if(StringUtil.isEmpty(search)) return this.setResultError("search不能为空");
+        NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
+        // 查询
+        nativeSearchQueryBuilder.withQuery(QueryBuilders.multiMatchQuery(search,"title","brandName","categoryName"));
+        //高亮
+        nativeSearchQueryBuilder.withHighlightBuilder(ESHighLightUtil.getHighlightBuilder("title"));
+        //分页
+        nativeSearchQueryBuilder.withPageable(PageRequest.of(1-1,10));
+
+        SearchHits<GoodsDoc> searchHits = elasticsearchRestTemplate.search(nativeSearchQueryBuilder.build(), GoodsDoc.class);
+        //将查询到的hits中content内容的title替换成高亮title. 返回查询的数据
+        List<GoodsDoc> goodsDocs = ESHighLightUtil.getHighLightHit(searchHits.getSearchHits())
+                .stream().map(searchHit -> searchHit.getContent()).collect(Collectors.toList());
+
+        return this.setResultSuccess(goodsDocs);
+    }
 
     @Override
     public Result<JsonObject> cleanEsData() {
@@ -78,8 +107,6 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
 
     private List<GoodsDoc> getGoodsInfo() {
         SpuDTO spuDTO = new SpuDTO();
-        spuDTO.setPage(1);
-        spuDTO.setRows(5);
         Result<List<SpuDTO>> spuResult = goodsFeign.select(spuDTO);
 
         List<GoodsDoc> goodsDocs = new ArrayList<>();
