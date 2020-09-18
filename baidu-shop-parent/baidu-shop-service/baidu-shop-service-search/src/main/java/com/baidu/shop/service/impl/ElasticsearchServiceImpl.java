@@ -60,8 +60,9 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
     @Autowired
     private MrElasticsearchRepository mrElasticsearchRepository;
 
+
     @Override
-    public Result<List<GoodsDoc>> search(String search) {
+    public Result<List<GoodsDoc>> search(String search, Integer page) {
         if(StringUtil.isEmpty(search)) return this.setResultError("search不能为空");
         NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
         // 查询
@@ -69,14 +70,21 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
         //高亮
         nativeSearchQueryBuilder.withHighlightBuilder(ESHighLightUtil.getHighlightBuilder("title"));
         //分页
-        nativeSearchQueryBuilder.withPageable(PageRequest.of(1-1,10));
+        nativeSearchQueryBuilder.withPageable(PageRequest.of(page-1,10));
 
         SearchHits<GoodsDoc> searchHits = elasticsearchRestTemplate.search(nativeSearchQueryBuilder.build(), GoodsDoc.class);
         //将查询到的hits中content内容的title替换成高亮title. 返回查询的数据
         List<GoodsDoc> goodsDocs = ESHighLightUtil.getHighLightHit(searchHits.getSearchHits())
                 .stream().map(searchHit -> searchHit.getContent()).collect(Collectors.toList());
+        //总条数 
+        long total = searchHits.getTotalHits();
+        long totalPage = Double.valueOf(Math.ceil(Long.valueOf(total).doubleValue() / 10)).longValue();
 
-        return this.setResultSuccess(goodsDocs);
+        HashMap<String, Long> message = new HashMap<>();
+        message.put("total",total);
+        message.put("totalPage",totalPage);
+
+        return this.setResult(HTTPStatus.OK,JSONUtil.toJsonString(message),goodsDocs);
     }
 
     @Override

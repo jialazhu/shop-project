@@ -22,5 +22,5 @@ public interface ElasticsearchService {
 
     @ApiOperation(value = "根据字段查询索引")
     @GetMapping("es/search")
-    Result<List<GoodsDoc>> search(String search);
+    Result<List<GoodsDoc>> search(String search,Integer page);
 }
