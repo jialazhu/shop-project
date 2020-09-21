@@ -36,4 +36,8 @@ public interface BrandService {
     @GetMapping("brand/getBrandByCate")
     @ApiOperation(value = "查询品牌")
     Result<List<BrandEntity>> getBrandByCate(Integer cid);
+
+    @GetMapping("brand/getBrandByIdList")
+    @ApiOperation(value = "通过id集合查询品牌")
+    Result<List<BrandEntity>> getBrandByIdList(@RequestParam String brandids);
 }
