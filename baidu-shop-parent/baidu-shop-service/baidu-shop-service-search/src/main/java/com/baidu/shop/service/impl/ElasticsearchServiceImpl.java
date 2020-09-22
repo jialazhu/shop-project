@@ -25,6 +25,7 @@ import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -36,10 +37,7 @@ import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -71,6 +69,12 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
     @Autowired
     private CategoryFeign categoryFeign;
 
+    /**
+     * es搜索方法
+     * @param search
+     * @param page
+     * @return
+     */
     @Override
     public EsResponse search(String search, Integer page) {
         //查询
@@ -85,13 +89,69 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
         Aggregations aggregations = searchHits.getAggregations();
         //获得brandId集合
         List<BrandEntity> brandList = this.getBrandList(aggregations);
-        //获得cid3集合
-        List<CategoryEntity> categoryList = this.getCategoryList(aggregations);
+        //获得cid3分类和热门cid的map
+        Map<Integer, List<CategoryEntity>> categoryMap = this.getCategoryList(aggregations);
+        // 热门cid
+        Integer hotCid = 0 ;
+        // 分类cid3集合
+        List<CategoryEntity> categoryList = null ;
+        for (Map.Entry<Integer, List<CategoryEntity>> entry : categoryMap.entrySet()) {
+            hotCid = entry.getKey();
+            categoryList = entry.getValue();
+        }
+        // 根据热点cid 返回热点分类能用于 搜索 的规格和具体范围
+        HashMap<String, List<String>> paramAndValueMap = this.getHotParamAndValueByHotCid(hotCid, search);
 
-        return new EsResponse(total,totalPage,brandList,categoryList,goodsDocs);
+        return new EsResponse(total,totalPage,brandList,categoryList,goodsDocs,paramAndValueMap);
+    }
+
+    /**
+     * 通过热点分类id返回分类的规格和聚合的值
+     * @param hotCid
+     * @param search
+     * @return
+     */
+    private HashMap<String, List<String>> getHotParamAndValueByHotCid(Integer hotCid , String search){
+        //通过热门cid去查询规格
+        SpecParamDTO paramDTO = new SpecParamDTO();
+        paramDTO.setCid(hotCid);
+        paramDTO.setSearching(true);
+        // 查询出来的规格结果集
+        Result<List<SpecParamEntity>> paramResult = specificationFeign.selectParam(paramDTO);
+        HashMap<String, List<String>> map = new HashMap<>();
+        if(paramResult.getCode() == 200){
+            // 构建 es查询条件
+            NativeSearchQueryBuilder searchQueryBuilder = new NativeSearchQueryBuilder();
+            //需要在原搜索的基础上构建查询 所以必须要有
+            searchQueryBuilder.withQuery(QueryBuilders.multiMatchQuery(search,"title","brandName","categoryName"));
+            searchQueryBuilder.withPageable(PageRequest.of(0,1));
+            //遍历规格集合
+            paramResult.getData().stream().forEach(param->{
+                //根据查询出来的规格名 聚合 搜索
+                searchQueryBuilder.addAggregation(AggregationBuilders.terms(param.getName()).field("specs."+param.getName()+".keyword"));
+            });
+            // es查询
+            SearchHits<GoodsDoc> SearchHits = elasticsearchRestTemplate.search(searchQueryBuilder.build(), GoodsDoc.class);
+            // 获得聚合aggr
+            Aggregations aggregations = SearchHits.getAggregations();
+            //再次遍历规格集合 通过规格名去获得聚合的桶 (规格名就是聚合名)
+            paramResult.getData().stream().forEach(param->{
+                Terms terms = aggregations.get(param.getName());
+                List<String> valueList = terms.getBuckets().stream().map(bucket -> bucket.getKeyAsString()).collect(Collectors.toList());
+                map.put(param.getName(),valueList);
+            });
+            return map;
+        }
+        return null;
     }
 
 
+    /**
+     * 构建es搜索查询条件
+     * @param search
+     * @param page
+     * @return
+     */
     private NativeSearchQueryBuilder getSearchQueryBuilder(String search, Integer page){
 
         NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
@@ -110,6 +170,11 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
         return nativeSearchQueryBuilder;
     }
 
+    /**
+     * 通过品牌id聚合 返回品牌集合
+     * @param aggregations
+     * @return
+     */
     private List<BrandEntity> getBrandList(Aggregations aggregations){
         Terms brand_agg = aggregations.get("brand_agg");
         List<? extends Terms.Bucket> brandBuckets = brand_agg.getBuckets();
@@ -119,15 +184,37 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
         return brandResult.getData();
     }
 
-    private List<CategoryEntity> getCategoryList(Aggregations aggregations){
+    /**
+     * 通过分类cid3聚合 返回分类集合
+     * @param aggregations
+     * @return
+     */
+    private  Map<Integer, List<CategoryEntity>>  getCategoryList(Aggregations aggregations){
         Terms cate_agg = aggregations.get("cate_agg");
         List<? extends Terms.Bucket> catebuckets = cate_agg.getBuckets();
-        List<String> catesList = catebuckets.stream().map(cate -> cate.getKeyAsString()).collect(Collectors.toList());
+        // 最热的总数.
+        List<Long> hotDoc = Arrays.asList(0L);
+        //最热的cid
+        List<Integer> hotCid = Arrays.asList(0);
+        List<String> catesList = catebuckets.stream().map(cate -> {
+            if(cate.getDocCount() > hotDoc.get(0)){
+                hotDoc.set(0,cate.getDocCount());
+                hotCid.set(0,cate.getKeyAsNumber().intValue());
+            }
+            return cate.getKeyAsString();
+        }).collect(Collectors.toList());
         String cateids = String.join(",", catesList);
         Result<List<CategoryEntity>> categoryResult= categoryFeign.getCateByIdList(cateids);
-        return categoryResult.getData();
+        // 返回热门cid 和 查询的所有分类
+        Map<Integer, List<CategoryEntity>> map = new HashMap<>();
+        map.put(hotCid.get(0),categoryResult.getData());
+        return map;
     }
 
+    /**
+     * 清空es库
+     * @return
+     */
     @Override
     public Result<JsonObject> cleanEsData() {
         IndexOperations indexOperations = elasticsearchRestTemplate.indexOps(GoodsDoc.class);
@@ -138,6 +225,10 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
         return this.setResultSuccess();
     }
 
+    /**
+     * 初始化es库
+     * @return
+     */
     @Override
     public Result<JsonObject> initEsData() {
         IndexOperations indexOperations = elasticsearchRestTemplate.indexOps(GoodsDoc.class);
@@ -154,6 +245,10 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
         return this.setResultSuccess();
     }
 
+    /**
+     * 获得GoodsDOC集合
+     * @return
+     */
     private List<GoodsDoc> getGoodsInfo() {
         SpuDTO spuDTO = new SpuDTO();
         Result<List<SpuDTO>> spuResult = goodsFeign.select(spuDTO);
@@ -188,6 +283,11 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
         return goodsDocs;
     }
 
+    /**
+     * 通过spuid查询 通过map方式返回价格集合和skus集合
+     * @param spuId
+     * @return
+     */
     private Map<List<Long>,List<Map<String, Object>>> getPriceAndSkus(Integer spuId){
         //通过spuid 查询skus
         List<Map<String, Object>> skus = new ArrayList<>();
@@ -211,6 +311,11 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
         return map;
     }
 
+    /**
+     * 通过spuid查询 返回规格参数
+     * @param spu
+     * @return
+     */
     private Map<String, Object> getSpecs(SpuDTO spu){
         //将规格参数和规格值存放到specs
         Map<String, Object> specs = new HashMap<>();
@@ -246,6 +351,14 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
         return specs;
     }
 
+
+    /**
+     * 工具方法. 将具体值转化为具体范围
+     * @param value
+     * @param segments
+     * @param unit
+     * @return
+     */
     // 因为有些参数是数值类型能被范围搜索.效率低.此方法将数值直接更改为具体范围.方便直接查询 提高es查询效率
     private String chooseSegment(String value, String segments, String unit) {
         double val = NumberUtils.toDouble(value);
