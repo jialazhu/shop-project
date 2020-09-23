@@ -272,6 +272,7 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
      */
     private List<GoodsDoc> getGoodsInfo() {
         SpuDTO spuDTO = new SpuDTO();
+        //spuDTO.setSaleable(1);
         Result<List<SpuDTO>> spuResult = goodsFeign.select(spuDTO);
 
         List<GoodsDoc> goodsDocs = new ArrayList<>();
