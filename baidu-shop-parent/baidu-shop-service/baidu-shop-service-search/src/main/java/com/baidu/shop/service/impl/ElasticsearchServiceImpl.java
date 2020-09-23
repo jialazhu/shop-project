@@ -24,8 +24,9 @@ import com.baidu.shop.utils.StringUtil;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -76,9 +77,9 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
      * @return
      */
     @Override
-    public EsResponse search(String search, Integer page) {
+    public EsResponse search(String search, Integer page,String filter) {
         //查询
-        SearchHits<GoodsDoc> searchHits = elasticsearchRestTemplate.search(this.getSearchQueryBuilder(search,page).build(), GoodsDoc.class);
+        SearchHits<GoodsDoc> searchHits = elasticsearchRestTemplate.search(this.getSearchQueryBuilder(search,page,filter).build(), GoodsDoc.class);
         //将查询到的hits中content内容的title替换成高亮title. 返回查询的数据
         List<GoodsDoc> goodsDocs = ESHighLightUtil.getHighLightHit(searchHits.getSearchHits())
                 .stream().map(searchHit -> searchHit.getContent()).collect(Collectors.toList());
@@ -152,9 +153,29 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
      * @param page
      * @return
      */
-    private NativeSearchQueryBuilder getSearchQueryBuilder(String search, Integer page){
+    private NativeSearchQueryBuilder getSearchQueryBuilder(String search, Integer page,String filter){
 
         NativeSearchQueryBuilder nativeSearchQueryBuilder = new NativeSearchQueryBuilder();
+        //搜索过滤
+        if(StringUtil.isNotEmpty(filter) && filter.length() > 2){
+            BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+            // json字符串转map对象
+            Map<String, String> filterMap = JSONUtil.toMapValueString(filter);
+            // 遍历
+            filterMap.forEach((key,value) -> {
+                MatchQueryBuilder matchQueryBuilder = null;
+                if(key.equals("cid3") || key.equals("brandId")){
+                    // 拼接过滤条件
+                    matchQueryBuilder = QueryBuilders.matchQuery(key, value);
+                }else{
+                    matchQueryBuilder = QueryBuilders.matchQuery("specs."+key+".keyword",value);
+                }
+                boolQueryBuilder.must(matchQueryBuilder);
+            });
+
+            nativeSearchQueryBuilder.withFilter(boolQueryBuilder);
+        }
+
         // 查询
         if(StringUtil.isNotEmpty(search)){
             nativeSearchQueryBuilder.withQuery(QueryBuilders.multiMatchQuery(search,"title","brandName","categoryName"));
@@ -334,6 +355,7 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
             if (paramResult.getCode() == HTTPStatus.OK) {
                 List<SpecParamEntity> paramList = paramResult.getData();
                 paramList.stream().forEach(param->{
+                    //判断是不是私有或公有规格
                     if(param.getGeneric()){
                         //判断是不是可搜索范围 和 是否是数值类型
                         if(param.getNumeric() && param.getSearching()){
