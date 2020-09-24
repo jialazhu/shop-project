@@ -20,7 +20,7 @@ public interface SpecificationService {
 
     @GetMapping("specification/listGroup")
     @ApiOperation(value = "查询品牌规格组")
-    Result<List<SpecGroupEntity>> selectGroup(SpecGroupDTO specGroupDTO);
+    Result<List<SpecGroupEntity>> selectGroup(@SpringQueryMap SpecGroupDTO specGroupDTO);
 
     @PostMapping("specification/saveGroup")
     @ApiOperation(value = "新增品牌规格组")

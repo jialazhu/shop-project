@@ -93,8 +93,20 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
 
     @Override
     public Result<List<SkuDTO>> getSkuAndStockBySpuId(Integer spuId) {
-        List<SkuDTO> list = skuMapper.getSkuAndStockBySpuId(spuId);
-        return this.setResultSuccess(list);
+       // List<SkuDTO> list = skuMapper.getSkuAndStockBySpuId(spuId);
+        Example example = new Example(SkuEntity.class);
+        if(ObjectUtil.isNotNull(spuId))
+            example.createCriteria().andEqualTo("spuId",spuId);
+        List<SkuEntity> skuList = skuMapper.selectByExample(example);
+
+        List<SkuDTO> SkuDTOList = skuList.stream().map(skuEntity -> {
+            SkuDTO skuDTO = BeanUtil.copyProperties(skuEntity, SkuDTO.class);
+            StockEntity stockEntity = stockMapper.selectByPrimaryKey(skuEntity.getId());
+            skuDTO.setStock(stockEntity.getStock());
+            return skuDTO;
+        }).collect(Collectors.toList());
+
+        return this.setResultSuccess(SkuDTOList);
     }
 
     @Override

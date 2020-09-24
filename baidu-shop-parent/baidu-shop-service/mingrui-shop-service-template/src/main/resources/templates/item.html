@@ -123,7 +123,7 @@
 						<!--默认第一个预览-->
 						<div id="preview" class="spec-preview">
 							<span class="jqzoom">
-								<img jqimg="/img/_/b1.png" src="/img/_/s1.png" width="400px" height="400px"/>
+								<img :jqimg="images[0]" :src="images[0]" width="400px" height="400px"/>
 							</span>
 						</div>
 						<!--下方的缩略图-->
@@ -132,15 +132,15 @@
 							<!--左右按钮-->
 							<div class="items">
 								<ul>
-									<li><img src="/img/_/s1.png" bimg="/img/_/b1.png" onmousemove="preview(this)" /></li>
-									<li><img src="/img/_/s2.png" bimg="/img/_/b2.png" onmousemove="preview(this)" /></li>
+									<li v-for="image in images"><img :src="image" :bimg="image" onmousemove="preview(this)" /></li>
+								<!--	<li><img src="/img/_/s2.png" bimg="/img/_/b2.png" onmousemove="preview(this)" /></li>
 									<li><img src="/img/_/s3.png" bimg="/img/_/b3.png" onmousemove="preview(this)" /></li>
 									<li><img src="/img/_/s1.png" bimg="/img/_/b1.png" onmousemove="preview(this)" /></li>
 									<li><img src="/img/_/s2.png" bimg="/img/_/b2.png" onmousemove="preview(this)" /></li>
 									<li><img src="/img/_/s3.png" bimg="/img/_/b3.png" onmousemove="preview(this)" /></li>
 									<li><img src="/img/_/s1.png" bimg="/img/_/b1.png" onmousemove="preview(this)" /></li>
 									<li><img src="/img/_/s2.png" bimg="/img/_/b2.png" onmousemove="preview(this)" /></li>
-									<li><img src="/img/_/s3.png" bimg="/img/_/b3.png" onmousemove="preview(this)" /></li>
+									<li><img src="/img/_/s3.png" bimg="/img/_/b3.png" onmousemove="preview(this)" /></li>-->
 								</ul>
 							</div>
 							<a class="next">&gt;</a>
@@ -149,14 +149,14 @@
 				</div>
 				<div class="fr itemInfo-wrap">
 					<div class="sku-name">
-						<h4>Apple iPhone 6s（A1700）64G玫瑰金色 移动通信电信4G手机</h4>
+						<h4>{{ sku.title }}</h4>
 					</div>
 					<div class="news"><span th:utext="${spuData.subTitle}"></span></div>
 					<div class="summary">
 						<div class="summary-wrap">
 							<div class="fl title"><i>价　　格</i></div>
 							<div class="fl price">
-								<i>¥</i><em>5299.00</em><span>降价通知</span>
+								<i>¥</i><em>{{mrshop.formatPrice(sku.price)}}</em><span>降价通知</span>
 							</div>
 							<div class="fr remark"><i>累计评价</i><em>612188</em></div>
 						</div>
@@ -191,51 +191,17 @@
 					</div>
 					<div class="clearfix choose">
 						<div id="specification" class="summary-wrap clearfix">
-							<dl>
+							<dl v-for="(value,key,index) in specialSpec" :key="index">
 								<dt>
 									<div class="fl title">
-									<i>选择颜色</i>
+									<i>选择{{ specialSpecMap[key] }}</i>
 								</div>
 								</dt>
-								<dd>
-									<a href="javascript:;" class="selected">
-										金色<span title="点击取消选择">&nbsp;</span>
+								<dd v-for="(param,i) in value " :key="i">
+									<a href="javascript:;" @click="indexes[key] = i" :class="{selected : indexes[key] == i}">
+										{{ param }} <span title="点击取消选择">&nbsp;</span>
 									</a>
 								</dd>
-								<dd><a href="javascript:;">银色</a></dd>
-								<dd><a href="javascript:;">黑色</a></dd>
-							</dl>
-							<dl>
-								<dt>
-									<div class="fl title">
-									<i>内存容量</i>
-								</div>
-								</dt>
-								<dd><a href="javascript:;" class="selected">16G<span title="点击取消选择">&nbsp;</span>
-</a></dd>
-								<dd><a href="javascript:;">64G</a></dd>
-								<dd><a href="javascript:;" class="locked">128G</a></dd>
-							</dl>
-							<dl>
-								<dt>
-									<div class="fl title">
-									<i>选择版本</i>
-								</div>
-								</dt>
-								<dd><a href="javascript:;" class="selected">公开版<span title="点击取消选择">&nbsp;</span>
-</a></dd>
-								<dd><a href="javascript:;">移动版</a></dd>							
-							</dl>
-							<dl>
-								<dt>
-									<div class="fl title">
-									<i>购买方式</i>
-								</div>
-								</dt>
-								<dd><a href="javascript:;" class="selected">官方标配<span title="点击取消选择">&nbsp;</span>
-</a></dd>
-								<dd><a href="javascript:;">移动优惠版</a></dd>	
-								<dd><a href="javascript:;"  class="locked">电信优惠版</a></dd>
 							</dl>
 						</div>
 
@@ -473,8 +439,8 @@
 						<div class="tab-content tab-wraped">
 							<div id="one" class="tab-pane active">
 								<ul class="goods-intro-list unstyled" style="list-style: none;">
-									<li>分辨率：1920*1080(FHD)</li>
-									<li>后置摄像头：1200万像素</li>
+									<li v-for="( value,key,index) in params" :key="index">{{value}}:{{spec[key] }}{{specUnitMap[key]}}</li>
+									<!--<li>后置摄像头：1200万像素</li>
 									<li>前置摄像头：500万像素</li>
 									<li>核 数：其他</li>
 									<li>频 率：以官网信息为准</li>
@@ -486,7 +452,7 @@
 									<li>热点：指纹识别，Apple Pay，金属机身，拍照神器</li>
 									<li>系统：苹果（IOS）</li>
 									<li>像素：1000-1600万</li>
-									<li>机身内存：64GB</li>
+									<li>机身内存：64GB</li>-->
 								</ul>
 								<!--商品详情-->
 								<div class="intro-detail" th:utext="${spuData.spuDetail.description}">
@@ -497,17 +463,13 @@
 							</div>
 							<div id="two" class="tab-pane">
 								<div class="Ptable">
-    <div class="Ptable-item">
-        <h3>主体</h3>
+    <div class="Ptable-item" v-for="(value,key,index) in specMap" :key="index">
+        <h3>{{key}}</h3>
         <dl>
-            <dt>品牌</dt><dd>华为（HUAWEI）</dd>
-            <dt>型号</dt><dd>CLT-AL00</dd>
-            <dt>入网型号</dt><dd>CLT-AL00</dd>
-            <dt>上市年份</dt><dd>2018年</dd>
-            <dt>上市月份</dt><dd>4月</dd>
+			<span v-for="(param,pid,index) in value" :key="index" ><dt>{{param}}</dt><dd>{{ spec[pid] }} {{specUnitMap[pid]}}</dd></span>
         </dl>
     </div>
-    <div class="Ptable-item">
+  <!--  <div class="Ptable-item">
         <h3>基本信息</h3>
         <dl>
             <dt>机身颜色</dt><dd>宝石蓝</dd>
@@ -519,7 +481,7 @@
             <dt>运营商标志或内容</dt><dd>无</dd>
             <dt>机身材质分类</dt><dd>玻璃后盖</dd>
         </dl>
-    </div>
+    </div>-->
 </div>
 <div class="package-list">
     <h3>包装清单</h3>
@@ -671,12 +633,54 @@
 <script src="/js/vue/vue.js"></script>
 <script src="/js/axios.min.js"></script>
 <script src="/js/common.js"></script>
+<script th:inline="javascript">
+	const  spuData=/*[[${spuData}]]*/{};
+	const  brandData=/*[[${brandData}]]*/{};
+	const  categoryList=/*[[${categoryList}]]*/[];
+	const  specialSpec= JSON.parse(/*[[${spuData.spuDetail.specialSpec}]]*/); //特有规格值
+	const  genericSpec= JSON.parse(/*[[${spuData.spuDetail.genericSpec}]]*/); //公共规格值
+	const  skus=/*[[${spuData.skus}]]*/[]; //skus
+	const  specialSpecMap=/*[[${specialSpecMap}]]*/{}; // 特有规格参数
+	const  specUnitMap=/*[[${specUnitMap}]]*/{}; // 规格参数单位
+	const  specMap=/*[[${specMap}]]*/{}; // 所有 规格组 和 对应的 规格参数
+	let indexes = {}; //存放下标 如:0_0_0
+	Object.keys(specialSpec).forEach(key => {
+		indexes[key] = 0;
+	});
+	const params = {}; // 存放所有的规格参数 用在 商品介绍
+	 Object.values(specMap).forEach(param => {
+		 Object.assign(params,param);
+	});
 
+</script>
 <script>
     var itemVm = new Vue({
         el:"#itemApp",
         data:{
+        	params, // 商品展示中显示的规格参数
+			skus,  // skus
+			indexes,  // 商品展示下标 如 0_0_0
+			specialSpec, // 特有规格值
+			genericSpec, // 通用规格值
+			specialSpecMap, //特有规格参数
+			specMap, //  所有规格组和对应的规格参数
+			specUnitMap, // 规格参数的单位
+			mrshop, // vue中的方法
         },
+		computed:{
+        	sku(){ // 计算属性  计算当前的sku
+        		const index = Object.values(this.indexes).join("_");
+        		return this.skus.find(sku => sku.indexes == index);
+			},
+			images(){ // 计算当前sku 的 images
+        		return this.sku.images ? this.sku.images.split(",") : [];
+			},
+			spec(){ // 计算当前sku的 所有规格( 通用 + sku特有)
+        		const pwnSpec = JSON.parse(this.sku.ownSpec);
+        		const spec = Object.assign({},this.genericSpec,pwnSpec);
+				return spec ;
+			}
+		},
         components:{
             b2cTop: () => import('/js/pages/top.js')
         }
@@ -705,16 +709,7 @@ $(function(){
 <script type="text/javascript" src="/js/plugins/jquery.jqzoom/jquery.jqzoom.js"></script>
 <script type="text/javascript" src="/js/plugins/jquery.jqzoom/zoom.js"></script>
 <script type="text/javascript" src="index/index.js"></script>
-<script th:inline="javascript">
-	const  spuData=/*[[${spuData}]]*/{};
-	const  brandData=/*[[${brandData}]]*/{};
-	const  categoryList=/*[[${categoryList}]]*/{};
-	const  spuDetail=/*[[${spuData.spuDetail}]]*/{};
-	const  skus=/*[[${spuData.skus}]]*/{};
 
-	console.log(spuData);
-	console.log(skus);
-</script>
 </body>
 
 </html>

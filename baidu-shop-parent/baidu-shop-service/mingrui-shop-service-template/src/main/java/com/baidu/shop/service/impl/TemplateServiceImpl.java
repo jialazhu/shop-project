@@ -1,13 +1,8 @@
 package com.baidu.shop.service.impl;
 
 import com.baidu.shop.base.Result;
-import com.baidu.shop.dto.BrandDTO;
-import com.baidu.shop.dto.SkuDTO;
-import com.baidu.shop.dto.SpuDTO;
-import com.baidu.shop.dto.SpuDetailDTO;
-import com.baidu.shop.entity.BrandEntity;
-import com.baidu.shop.entity.CategoryEntity;
-import com.baidu.shop.entity.SpuDetailEntity;
+import com.baidu.shop.dto.*;
+import com.baidu.shop.entity.*;
 import com.baidu.shop.feign.BrandFeign;
 import com.baidu.shop.feign.CategoryFeign;
 import com.baidu.shop.feign.GoodsFeign;
@@ -74,6 +69,45 @@ public class TemplateServiceImpl implements TemplateService {
                 List<SkuDTO> skusList = skuAndStockResult.getData();
                 spuData.setSkus(skusList);
                 map.put("spuData",spuData);
+            }
+
+            //通过cid3 获得规格组 规格参数 放到map中
+            //规格组
+            SpecGroupDTO specGroupDTO = new SpecGroupDTO();
+            specGroupDTO.setCid(spuData.getCid3());
+            Result<List<SpecGroupEntity>> groupResult = specificationFeign.selectGroup(specGroupDTO);
+            // 规格参数
+            SpecParamDTO specParamDTO = new SpecParamDTO();
+            specParamDTO.setCid(spuData.getCid3());
+            Result<List<SpecParamEntity>> paramResult = specificationFeign.selectParam(specParamDTO);
+
+            if(paramResult.getCode() == 200){
+                //特有规格参数
+                Map<Integer, String> specialSpecMap = new HashMap<>();
+                //规格参数的单位
+                Map<Integer,String> specUnitMap = new HashMap<>();
+                paramResult.getData().stream().forEach(param ->{
+                    if(!param.getGeneric())  // 特有规格参数
+                        specialSpecMap.put(param.getId(),param.getName());
+                    specUnitMap.put(param.getId(),param.getUnit());
+                });
+                map.put("specialSpecMap",specialSpecMap);
+                map.put("specUnitMap",specUnitMap);
+            }
+
+            if(groupResult.getCode() == 200 ){
+                // key 规格组名 , value 参数map
+                Map<String, Map<Integer, String>> specMap = new HashMap<>();
+                groupResult.getData().stream().forEach(group->{
+                    Map<Integer, String> paramMap = new HashMap<>(); // 规格参数
+                    paramResult.getData().stream().forEach(param ->{
+                        if(group.getId() == param.getGroupId()){ // 判断 如果是一个规格组里的参数 就添加到paramMap中.
+                            paramMap.put(param.getId(),param.getName());
+                        }
+                    });
+                    specMap.put(group.getName(),paramMap);
+                });
+                map.put("specMap",specMap);
             }
 
             //通过查询出来的spu数据的brandId 获得brand数据
