@@ -10,5 +10,5 @@ import java.util.Map;
  * @Version V1.0
  **/
 public interface TemplateService {
-    Map<String, Object> getInfoBySpuId(Integer spuId);
+//    Map<String, Object> getInfoBySpuId(Integer spuId);
 }

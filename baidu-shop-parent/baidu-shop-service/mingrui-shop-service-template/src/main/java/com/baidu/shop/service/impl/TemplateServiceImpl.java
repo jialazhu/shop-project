@@ -7,11 +7,10 @@ import com.baidu.shop.feign.BrandFeign;
 import com.baidu.shop.feign.CategoryFeign;
 import com.baidu.shop.feign.GoodsFeign;
 import com.baidu.shop.feign.SpecificationFeign;
+import com.baidu.shop.service.ApiTemplateService;
 import com.baidu.shop.service.TemplateService;
 import com.baidu.shop.utils.BeanUtil;
 import com.github.pagehelper.PageInfo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,22 +24,22 @@ import java.util.Map;
  * @Date 2020-09-23 19:22
  * @Version V1.0
  **/
-@Service
+//@Service
 public class TemplateServiceImpl implements TemplateService {
 
-    @Autowired
+//    @Autowired
     private GoodsFeign goodsFeign;
 
-    @Autowired
+//    @Autowired
     private CategoryFeign categoryFeign;
 
-    @Autowired
+//    @Autowired
     private BrandFeign brandFeign;
 
-    @Autowired
+//    @Autowired
     private SpecificationFeign specificationFeign;
 
-    @Override
+//    @Override
     public Map<String, Object> getInfoBySpuId(Integer spuId) {
         Map<String, Object> map = new HashMap<>();
         // 通过spuId 获得spu数据

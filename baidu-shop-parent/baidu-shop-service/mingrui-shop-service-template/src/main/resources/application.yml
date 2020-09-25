@@ -26,3 +26,8 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+baidu:
+  static:
+    html:
+      path: D:\\feiq\\RecvFiles\\6_month\\shop\\html-static\\item

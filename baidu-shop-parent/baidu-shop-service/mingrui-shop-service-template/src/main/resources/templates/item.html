@@ -466,7 +466,7 @@
     <div class="Ptable-item" v-for="(value,key,index) in specMap" :key="index">
         <h3>{{key}}</h3>
         <dl>
-			<span v-for="(param,pid,index) in value" :key="index" ><dt>{{param}}</dt><dd>{{ spec[pid] }} {{specUnitMap[pid]}}</dd></span>
+			<span v-for="(param,pid,index) in value" :key="index" ><dt>{{param}}</dt><dd>{{ spec[pid]?spec[pid]:'其他' }} {{specUnitMap[pid]}}</dd></span>
         </dl>
     </div>
   <!--  <div class="Ptable-item">
