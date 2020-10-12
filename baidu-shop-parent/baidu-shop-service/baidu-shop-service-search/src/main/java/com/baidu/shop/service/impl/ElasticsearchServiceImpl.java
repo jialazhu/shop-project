@@ -70,6 +70,25 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
     @Autowired
     private CategoryFeign categoryFeign;
 
+
+    @Override
+    public Result<JsonObject> deleteData(Integer spuId) {
+
+        mrElasticsearchRepository.deleteById(spuId.longValue());
+
+        return this.setResultSuccess();
+    }
+
+    @Override
+    public Result<JsonObject> saveData(Integer spuId) {
+        SpuDTO spuDTO = new SpuDTO();
+        spuDTO.setId(spuId);
+        List<GoodsDoc> goodsInfo = this.getGoodsInfo(spuDTO);
+
+        mrElasticsearchRepository.saveAll(goodsInfo);
+        return this.setResultSuccess();
+    }
+
     /**
      * es搜索方法
      * @param search
@@ -260,7 +279,7 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
             log.info("映射创建成功");
         }
 
-        List<GoodsDoc> goodsInfo = this.getGoodsInfo();
+        List<GoodsDoc> goodsInfo = this.getGoodsInfo(new SpuDTO());
 //        elasticsearchRestTemplate.save(goodsInfo);
         mrElasticsearchRepository.saveAll(goodsInfo);
         return this.setResultSuccess();
@@ -270,9 +289,8 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
      * 获得GoodsDOC集合
      * @return
      */
-    private List<GoodsDoc> getGoodsInfo() {
-        SpuDTO spuDTO = new SpuDTO();
-        //spuDTO.setSaleable(1);
+    private List<GoodsDoc> getGoodsInfo(SpuDTO spuDTO) {
+        //spuDTO.setSaleable(1); // 是否上架
         Result<List<SpuDTO>> spuResult = goodsFeign.select(spuDTO);
 
         List<GoodsDoc> goodsDocs = new ArrayList<>();

@@ -57,7 +57,6 @@ public class FastDFSUploadController {
         // 获取缩略图路径
         String path = thumbImageConfig.getThumbImagePath(storePath.getFullPath());
         log.info("缩略图路径:{}", path);
-
         return new Result<String>(HTTPStatus.OK,"上传成功",imgHost + path);
     }
 }

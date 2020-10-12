@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baidu.shop.base.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
@@ -23,4 +24,9 @@ public interface ApiTemplateService {
     @ApiOperation(value = "初始化Html模版")
     @GetMapping("item/initHtmlTemplate")
     Result<JSONObject> initHtmlTemplate();
+
+    @ApiOperation(value = "通过spuId删除html模版")
+    @DeleteMapping("item/deleteTemplate")
+    Result<JSONObject> deleteTemplate(Integer spuId);
+
 }

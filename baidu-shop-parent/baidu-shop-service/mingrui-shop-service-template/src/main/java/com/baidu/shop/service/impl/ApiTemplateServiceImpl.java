@@ -12,7 +12,6 @@ import com.baidu.shop.service.BaseApiService;
 import com.baidu.shop.service.ApiTemplateService;
 import com.baidu.shop.utils.BeanUtil;
 import com.github.pagehelper.PageInfo;
-import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,7 +35,7 @@ import java.util.Map;
  * @Version V1.0
  **/
 @RestController
-public class ApiApiTemplateServiceImpl extends BaseApiService implements ApiTemplateService {
+public class ApiTemplateServiceImpl extends BaseApiService implements ApiTemplateService {
 
     @Autowired
     private GoodsFeign goodsFeign;
@@ -55,6 +54,21 @@ public class ApiApiTemplateServiceImpl extends BaseApiService implements ApiTemp
 
     @Value(value = "${baidu.static.html.path}")
     private String htmlPath;
+
+    /**
+     * 根据spuId删除Html模版方法
+     * @param spuId
+     * @return
+     */
+    @Override
+    public Result<JSONObject> deleteTemplate(Integer spuId) {
+
+        File file = new File(htmlPath + File.separator + spuId + ".html");
+        if(!file.delete()){
+            this.setResultError(spuId+".html模版删除失败");
+        }
+        return this.setResultSuccess();
+    }
 
     /**
      * 创建html模版
@@ -90,8 +104,6 @@ public class ApiApiTemplateServiceImpl extends BaseApiService implements ApiTemp
         }finally {
             writer.close();
         }
-
-
 
         return this.setResultSuccess();
     }

@@ -1,6 +1,8 @@
 package com.baidu.shop.service.impl;
 
 import com.baidu.shop.base.Result;
+import com.baidu.shop.component.BaiduRabbitMQ;
+import com.baidu.shop.constant.MqMessageConstant;
 import com.baidu.shop.dto.BrandDTO;
 import com.baidu.shop.dto.SkuDTO;
 import com.baidu.shop.dto.SpuDTO;
@@ -17,6 +19,10 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import tk.mybatis.mapper.entity.Example;
@@ -55,6 +61,16 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
     @Resource
     private StockMapper stockMapper;
 
+    @Resource
+    private BaiduRabbitMQ baiduRabbitMQ;
+
+    //数据源事务注解
+    @Autowired
+    DataSourceTransactionManager dataSourceTransactionManager;
+    //事务注解
+    @Autowired
+    TransactionDefinition transactionDefinition;
+
     @Transactional
     @Override
     public Result<JsonObject> editSaleable(SpuDTO spuDTO) {
@@ -62,32 +78,57 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
         return this.setResultSuccess();
     }
 
-    @Transactional
+    //@Transactional
     @Override
     public Result<JsonObject> delete(Integer spuId) {
-        if(ObjectUtil.isNull(spuId)) return  this.setResultError("无效id");
-        spuMapper.deleteByPrimaryKey(spuId);
-        spuDetailMapper.deleteByPrimaryKey(spuId);
-        // 删除sku 和 stock
-        this.deleteSkusAndStocks(spuId);
+        //手动开启事务
+        TransactionStatus transactionStatus = dataSourceTransactionManager.getTransaction(transactionDefinition);
+
+        try {
+            if(ObjectUtil.isNull(spuId)) return  this.setResultError("无效id");
+            spuMapper.deleteByPrimaryKey(spuId);
+            spuDetailMapper.deleteByPrimaryKey(spuId);
+            // 删除sku 和 stock
+            this.deleteSkusAndStocks(spuId);
+            //提交事务
+            dataSourceTransactionManager.commit(transactionStatus);
+        } catch (TransactionException e) {
+            dataSourceTransactionManager.rollback(transactionStatus);
+            return this.setResultError("");
+        }
+        //发送消息
+        baiduRabbitMQ.send(spuId+"", MqMessageConstant.SPU_ROUT_KEY_DELETE);
         return this.setResultSuccess();
     }
 
-    @Transactional
+    //@Transactional
     @Override
     public Result<JsonObject> edit(SpuDTO spuDTO) {
-        Date date = new Date();
-        //修改spu
-        SpuEntity spuEntity = BeanUtil.copyProperties(spuDTO, SpuEntity.class);
-        spuEntity.setLastUpdateTime(date);
-        spuMapper.updateByPrimaryKeySelective(spuEntity);
-        //修改spuDetail
-        spuDetailMapper.updateByPrimaryKeySelective(BeanUtil.copyProperties(spuDTO.getSpuDetail(), SpuDetailEntity.class));
-        // 删除sku 和 stock
-        this.deleteSkusAndStocks(spuDTO.getId());
-        //新增 sku 和 stock
-        this.addSkusAndStocks(spuDTO.getSkus(),spuDTO.getId(),date);
+        //手动开启事务
+        TransactionStatus transactionStatus = dataSourceTransactionManager.getTransaction(transactionDefinition);
 
+        try {
+            Date date = new Date();
+            //修改spu
+            SpuEntity spuEntity = BeanUtil.copyProperties(spuDTO, SpuEntity.class);
+            spuEntity.setLastUpdateTime(date);
+            spuMapper.updateByPrimaryKeySelective(spuEntity);
+            //修改spuDetail
+            spuDetailMapper.updateByPrimaryKeySelective(BeanUtil.copyProperties(spuDTO.getSpuDetail(), SpuDetailEntity.class));
+            // 删除sku 和 stock
+            this.deleteSkusAndStocks(spuDTO.getId());
+            //新增 sku 和 stock
+            this.addSkusAndStocks(spuDTO.getSkus(),spuDTO.getId(),date);
+
+            //提交事务
+            dataSourceTransactionManager.commit(transactionStatus);
+        } catch (TransactionException e) {
+            dataSourceTransactionManager.rollback(transactionStatus);
+            return this.setResultError("");
+        }
+
+        //发送消息
+        baiduRabbitMQ.send(spuDTO.getId()+"", MqMessageConstant.SPU_ROUT_KEY_SAVE);
         return this.setResultSuccess();
     }
 
@@ -115,24 +156,38 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
         return this.setResultSuccess(spuDetailEntity);
     }
 
-    @Transactional
+    //@Transactional
     @Override
     public Result<JsonObject> save(SpuDTO spuDTO) {
+        //手动开启事务
+        TransactionStatus transactionStatus = dataSourceTransactionManager.getTransaction(transactionDefinition);
+        SpuEntity spuEntity = null;
 
-        // 先新增spu表 获得spuId
-        Date date = new Date();
-        SpuEntity spuEntity = BeanUtil.copyProperties(spuDTO, SpuEntity.class);
-        spuEntity.setSaleable(1);
-        spuEntity.setValid(1);
-        spuEntity.setCreateTime(date);
-        spuEntity.setLastUpdateTime(date);
-        spuMapper.insertSelective(spuEntity);
-        //新增spuDetail
-        SpuDetailEntity spuDetailEntity = BeanUtil.copyProperties(spuDTO.getSpuDetail(), SpuDetailEntity.class);
-        spuDetailEntity.setSpuId(spuEntity.getId());
-        spuDetailMapper.insertSelective(spuDetailEntity);
-        // 新增 sku 和 stock
-        this.addSkusAndStocks(spuDTO.getSkus(),spuEntity.getId(),date);
+        try {
+            // 先新增spu表 获得spuId
+            Date date = new Date();
+            spuEntity = BeanUtil.copyProperties(spuDTO, SpuEntity.class);
+            spuEntity.setSaleable(1);
+            spuEntity.setValid(1);
+            spuEntity.setCreateTime(date);
+            spuEntity.setLastUpdateTime(date);
+            spuMapper.insertSelective(spuEntity);
+            //新增spuDetail
+            SpuDetailEntity spuDetailEntity = BeanUtil.copyProperties(spuDTO.getSpuDetail(), SpuDetailEntity.class);
+            spuDetailEntity.setSpuId(spuEntity.getId());
+            spuDetailMapper.insertSelective(spuDetailEntity);
+            // 新增 sku 和 stock
+            this.addSkusAndStocks(spuDTO.getSkus(),spuEntity.getId(),date);
+
+            //提交事务
+            dataSourceTransactionManager.commit(transactionStatus);
+        } catch (TransactionException e) {
+            dataSourceTransactionManager.rollback(transactionStatus);
+            return this.setResultError("");
+        }
+
+        //发送消息
+        baiduRabbitMQ.send(spuEntity.getId()+"", MqMessageConstant.SPU_ROUT_KEY_SAVE);
         return this.setResultSuccess();
     }
 
