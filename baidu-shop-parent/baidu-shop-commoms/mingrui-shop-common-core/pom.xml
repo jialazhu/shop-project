@@ -68,6 +68,19 @@
            <artifactId>pinyin4j</artifactId>
            <version>2.5.1</version>
        </dependency>
+
+        <!-- 螺丝帽 短信验证SDK -->
+       <dependency>
+           <groupId>com.mrshop.luosimao</groupId>
+           <artifactId>jersey-bundle</artifactId>
+           <version>1.0.0</version>
+       </dependency>
+
+       <dependency>
+           <groupId>com.mrshop.luosimao</groupId>
+           <artifactId>json-org</artifactId>
+           <version>1.0.0</version>
+       </dependency>
    </dependencies>
 
 
