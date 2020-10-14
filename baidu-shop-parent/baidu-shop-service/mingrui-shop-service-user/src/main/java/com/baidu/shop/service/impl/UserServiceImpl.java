@@ -5,6 +5,7 @@ import com.baidu.shop.base.Result;
 import com.baidu.shop.dto.UserDTO;
 import com.baidu.shop.entity.UserEntity;
 import com.baidu.shop.mapper.UserMapper;
+import com.baidu.shop.repository.RedisRepository;
 import com.baidu.shop.service.BaseApiService;
 import com.baidu.shop.service.UserService;
 import com.baidu.shop.status.HTTPStatus;
@@ -12,7 +13,6 @@ import com.baidu.shop.utils.BCryptUtil;
 import com.baidu.shop.utils.BeanUtil;
 import com.baidu.shop.utils.LuoSiMaoUtil;
 import com.baidu.shop.utils.VerifyCode;
-import com.google.common.math.DoubleMath;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RestController;
 import tk.mybatis.mapper.entity.Example;
@@ -36,8 +36,11 @@ public class UserServiceImpl extends BaseApiService implements UserService {
     @Resource
     private UserMapper userMapper;
 
+    @Resource
+    private RedisRepository redisRepository;
+
     /**
-     * 生成图片验证码
+     * 生成图片验证码(自测)
      * @return
      */
     @Override
@@ -59,6 +62,8 @@ public class UserServiceImpl extends BaseApiService implements UserService {
         String code = this.getCode(); // 随机6位数验证码
         log.debug("手机号:{} --> 验证码:{}",phone,code);
         //LuoSiMaoUtil.sendCode(phone,code);  //发送验证码
+        //将手机号和验证码存入到redis中
+        redisRepository.set(phone, code);
         return this.setResultSuccess(code);
     }
 
@@ -91,6 +96,9 @@ public class UserServiceImpl extends BaseApiService implements UserService {
      */
     @Override
     public Result<JSONObject> register(UserDTO userDTO) {
+        if(!redisRepository.get(userDTO.getPhone()).equalsIgnoreCase(userDTO.getCode())){
+            return this.setResultError(HTTPStatus.PARAMS_VALIDATE_ERROR,"验证码错误");
+        }
         UserEntity userEntity = BeanUtil.copyProperties(userDTO, UserEntity.class);
         userEntity.setCreated(new Date());
         userEntity.setPassword(BCryptUtil.hashpw(userEntity.getPassword(),BCryptUtil.gensalt()));

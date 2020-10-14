@@ -35,6 +35,10 @@ public class UserDTO {
     @NotNull(message = "用户手机不能为空",groups = {MingruiOperation.Add.class})
     private String phone;
 
+    @ApiModelProperty(value = "手机验证码")
+    @NotNull(message = "手机验证码不能为空",groups = {MingruiOperation.Add.class})
+    private String code;
+
     @ApiModelProperty(hidden = true)
     private Date created;
 
