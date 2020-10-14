@@ -2,6 +2,7 @@ package com.baidu.shop.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baidu.shop.base.Result;
+import com.baidu.shop.constant.ShopConstant;
 import com.baidu.shop.dto.UserDTO;
 import com.baidu.shop.entity.UserEntity;
 import com.baidu.shop.mapper.UserMapper;
@@ -14,6 +15,7 @@ import com.baidu.shop.utils.BeanUtil;
 import com.baidu.shop.utils.LuoSiMaoUtil;
 import com.baidu.shop.utils.VerifyCode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import tk.mybatis.mapper.entity.Example;
 
@@ -63,7 +65,10 @@ public class UserServiceImpl extends BaseApiService implements UserService {
         log.debug("手机号:{} --> 验证码:{}",phone,code);
         //LuoSiMaoUtil.sendCode(phone,code);  //发送验证码
         //将手机号和验证码存入到redis中
-        redisRepository.set(phone, code);
+        redisRepository.set(ShopConstant.REDIS_PHONE_PRE+phone, code);
+        // 设置存在60秒
+        redisRepository.expire(ShopConstant.REDIS_PHONE_PRE+phone,60);
+
         return this.setResultSuccess(code);
     }
 
@@ -79,9 +84,9 @@ public class UserServiceImpl extends BaseApiService implements UserService {
     public Result<List<UserEntity>> checkUsernameOrPhone(String value, Integer type) {
         Example example = new Example(UserEntity.class);
         Example.Criteria criteria = example.createCriteria();
-        if(type == 1){
+        if(type == ShopConstant.USER_TYPE_USERNAME){
             criteria.andEqualTo("username",value);
-        }else if(type == 2){
+        }else if(type == ShopConstant.USER_TYPE_PHONE){
             criteria.andEqualTo("phone",value);
         }
         List<UserEntity> userList = userMapper.selectByExample(example);
@@ -94,9 +99,11 @@ public class UserServiceImpl extends BaseApiService implements UserService {
      * @param userDTO
      * @return
      */
+    @Transactional
     @Override
     public Result<JSONObject> register(UserDTO userDTO) {
-        if(!redisRepository.get(userDTO.getPhone()).equalsIgnoreCase(userDTO.getCode())){
+        String s = redisRepository.get(ShopConstant.REDIS_PHONE_PRE+userDTO.getPhone());
+        if(!userDTO.getCode().equalsIgnoreCase(s)){
             return this.setResultError(HTTPStatus.PARAMS_VALIDATE_ERROR,"验证码错误");
         }
         UserEntity userEntity = BeanUtil.copyProperties(userDTO, UserEntity.class);
