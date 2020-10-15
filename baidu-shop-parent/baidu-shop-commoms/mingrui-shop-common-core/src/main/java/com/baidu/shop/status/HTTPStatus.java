@@ -12,5 +12,11 @@ public class HTTPStatus {
 
     public static final int ERROR = 500;//失败
 
-    public static final int PARAMS_VALIDATE_ERROR = 5002;
+    public static final int PARAMS_VALIDATE_ERROR = 5002; // 参数验证失败
+
+    public static final int TOKEN_VALIDATE_ERROR = 5003; // token验证失败
+
+    public static final int USER_COOKIE_VALIDATE_ERROR = 403; // 用户cookie验证失败
+
+
 }

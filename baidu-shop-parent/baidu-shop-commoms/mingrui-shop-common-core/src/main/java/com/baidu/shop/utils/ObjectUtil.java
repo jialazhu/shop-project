@@ -1,6 +1,6 @@
 package com.baidu.shop.utils;
 
-import java.util.List;
+
 
 /**
  * @ClassName ObjectUtil
