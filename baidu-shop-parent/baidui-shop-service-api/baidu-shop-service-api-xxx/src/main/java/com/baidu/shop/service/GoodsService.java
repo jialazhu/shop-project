@@ -35,6 +35,10 @@ public interface GoodsService {
     @ApiOperation(value = "通过spuId查询Sku和Stock")
     Result<List<SkuDTO>> getSkuAndStockBySpuId(@RequestParam Integer spuId);
 
+    @GetMapping("goods/getSkuAndStockBySkuId")
+    @ApiOperation(value = "通过skuId查询Sku和Stock")
+    Result<SkuDTO> getSkuAndStockBySkuId(@RequestParam Long skuId);
+
     @DeleteMapping("goods/delete")
     @ApiOperation(value = "通过spuId查询Sku和Stock")
     Result<JsonObject> delete(Integer spuId);

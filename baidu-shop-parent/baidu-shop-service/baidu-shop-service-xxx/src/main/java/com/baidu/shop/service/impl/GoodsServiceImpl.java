@@ -71,6 +71,12 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
     @Autowired
     TransactionDefinition transactionDefinition;*/
 
+    @Override
+    public Result<SkuDTO> getSkuAndStockBySkuId(Long skuId) {
+        SkuDTO skuDTO =  skuMapper.selectBySkuId(skuId);
+        return this.setResultSuccess(skuDTO);
+    }
+
     @Transactional
     @Override
     public Result<JsonObject> editSaleable(SpuDTO spuDTO) {
@@ -78,7 +84,7 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
         return this.setResultSuccess();
     }
 
-    //@Transactional
+    @Transactional
     @Override
     public Result<JsonObject> delete(Integer spuId) {
 
@@ -100,7 +106,7 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
         return this.setResultSuccess();
     }
 
-    //@Transactional
+    @Transactional
     @Override
     public Result<JsonObject> edit(SpuDTO spuDTO) {
 
@@ -152,7 +158,7 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
         return this.setResultSuccess(spuDetailEntity);
     }
 
-    //@Transactional
+    @Transactional
     @Override
     public Result<JsonObject> save(SpuDTO spuDTO) {
 
