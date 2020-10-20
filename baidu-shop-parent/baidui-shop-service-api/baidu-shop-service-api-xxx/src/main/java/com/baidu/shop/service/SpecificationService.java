@@ -38,6 +38,10 @@ public interface SpecificationService {
     @ApiOperation(value = "查询品牌规格参数")
     Result<List<SpecParamEntity>> selectParam(@SpringQueryMap SpecParamDTO specParamDTO);
 
+    @GetMapping("specification/selectParamById")
+    @ApiOperation(value = "通过规格参数id查询品牌规格参数")
+    Result<SpecParamEntity> selectParamById(@RequestParam Integer id);
+
     @PostMapping("specification/saveParam")
     @ApiOperation(value = "新增品牌规格参数")
     Result<JsonObject> saveParam(@Validated({MingruiOperation.Add.class}) @RequestBody SpecParamDTO specParamDTO);

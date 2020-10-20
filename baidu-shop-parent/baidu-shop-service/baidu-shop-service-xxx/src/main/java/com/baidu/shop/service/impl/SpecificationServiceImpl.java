@@ -108,4 +108,10 @@ public class SpecificationServiceImpl extends BaseApiService implements Specific
         specParamMapper.deleteByPrimaryKey(id);
         return this.setResultSuccess();
     }
+
+    @Override
+    public Result<SpecParamEntity> selectParamById(Integer id) {
+        SpecParamEntity specParamEntity = specParamMapper.selectByPrimaryKey(id);
+        return this.setResultSuccess(specParamEntity);
+    }
 }

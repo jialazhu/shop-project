@@ -3,6 +3,7 @@ package com.baidu.shop.service;
 import com.baidu.shop.base.Result;
 import com.baidu.shop.dto.SkuDTO;
 import com.baidu.shop.dto.SpuDTO;
+import com.baidu.shop.entity.SkuEntity;
 import com.baidu.shop.entity.SpuDetailEntity;
 import com.google.gson.JsonObject;
 import io.swagger.annotations.Api;
@@ -35,9 +36,9 @@ public interface GoodsService {
     @ApiOperation(value = "通过spuId查询Sku和Stock")
     Result<List<SkuDTO>> getSkuAndStockBySpuId(@RequestParam Integer spuId);
 
-    @GetMapping("goods/getSkuAndStockBySkuId")
-    @ApiOperation(value = "通过skuId查询Sku和Stock")
-    Result<SkuDTO> getSkuAndStockBySkuId(@RequestParam Long skuId);
+    @GetMapping("goods/getSkuBySkuId")
+    @ApiOperation(value = "通过skuId查询Sku")
+    Result<SkuEntity> getSkuBySkuId(@RequestParam Long skuId);
 
     @DeleteMapping("goods/delete")
     @ApiOperation(value = "通过spuId查询Sku和Stock")

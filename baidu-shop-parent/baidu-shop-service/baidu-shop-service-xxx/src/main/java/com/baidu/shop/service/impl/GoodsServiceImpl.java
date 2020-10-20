@@ -72,9 +72,9 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
     TransactionDefinition transactionDefinition;*/
 
     @Override
-    public Result<SkuDTO> getSkuAndStockBySkuId(Long skuId) {
-        SkuDTO skuDTO =  skuMapper.selectBySkuId(skuId);
-        return this.setResultSuccess(skuDTO);
+    public Result<SkuEntity> getSkuBySkuId(Long skuId) {
+        SkuEntity skuEntity = skuMapper.selectByPrimaryKey(skuId);
+        return this.setResultSuccess(skuEntity);
     }
 
     @Transactional

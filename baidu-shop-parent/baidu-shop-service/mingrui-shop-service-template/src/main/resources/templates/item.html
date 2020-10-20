@@ -680,21 +680,18 @@
 				mrshop.http.get('/oauth/oauth/verify')
 				.then(resp=>{
 					//token登录
-					alert("1")
 					mrshop.http.post('/car/car/addCar',{
 						skuId:this.sku.id,
 						num:this.num,
 					}).then(resp=>{
 						if(resp.data.code == 200){
-
+							window.location.href = "/success-cart.html?skuId="+this.sku.id+"&spuId="+this.sku.spuId ; //跳转到成功页面
 						}
 					}).catch(err=> console.log(err))
 
 				}).catch(err=>{
-					alert("2")
-					return ;
 					//未登录
-					const skusList = mrshop.store.get("skusList") || []; //从localstorage 中获得商品集
+					const skusList = mrshop.store.get(mrshop.CAR_SKUS_LIST) || []; //从localstorage 中获得商品集
 					let car = skusList.find(sku => sku.skuId == this.sku.id); //判断当前商品是否重复
 					if(car){ //如果car存在 说明重复.合并商品数量
 						car.num += this.num;
@@ -705,12 +702,12 @@
 							image: this.images.length > 0 ? this.images[0]:'',
 							num:this.num,
 							ownSpec:this.ownSpec,
-							price:mrshop.formatPrice(this.sku.price),
+							price:this.sku.price,
 						}
 						skusList.push(car); //添加到商品集中
 					}
-					mrshop.store.set("skusList",skusList); //新增到localstorage 中
-					//window.location.href = "/success-cart.html?skuId="+this.sku.id+"&spuId="+this.sku.spuId ; //跳转到成功页面
+					mrshop.store.set(mrshop.CAR_SKUS_LIST,skusList); //新增到localstorage 中
+					window.location.href = "/success-cart.html?skuId="+this.sku.id+"&spuId="+this.sku.spuId ; //跳转到成功页面
 				})
 
 			}
