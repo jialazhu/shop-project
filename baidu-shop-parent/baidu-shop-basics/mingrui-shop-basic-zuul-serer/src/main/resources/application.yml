@@ -15,6 +15,7 @@ zuul:
     user-service: /user-center/**
     oauth-service: /oauth/**
     car-service: /car/**
+    order-service: /order/**
     # 路由名称
 #    api-xxx:
 #      # 声明将所有以/api-ribbon/的请求都转发到eureka-ribbon的服务中
@@ -59,7 +60,7 @@ eureka:
 shop:
   #声明不进行拦截的请求用,分隔
   filter:
-    excludes: /api/oauth/oauth/login,/api/user-center/user/register,/api/search/es/search
+    excludes: /api/oauth/oauth/login,/api/user-center/user/register,/api/search/es/search,/api/user-center/user/sendValidCode
   jwt:
     pubKeyPath: D:\feiq\RecvFiles\6_month\shop\token\rea.pub # 公钥地址(私钥加密,公钥解密)
     cookieName: SHOP_TOKEN

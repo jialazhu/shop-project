@@ -1,8 +1,9 @@
 server:
-  port: 8500
+  port: 8800
 
 spring:
-  # 整合redis配置
+  application:
+    name: order-service
   redis:
     # 数据库标识，可以配置多个redis使用不同的标识区分
     database: 0
@@ -23,13 +24,10 @@ spring:
         max-wait: -1ms
         #最小等待连接中的数量,设 0 为没有限制
         min-idle: 0
-  application:
-    name: user-service
-  # 配置数据源
   datasource:
     # 数据源名称，任意
     name: mysql
-    url: jdbc:mysql://localhost:3306/shop?useSSL=true&nullNamePatternMatchesAll=true&serverTimezone=GMT%2B8&useUnicode=true&characterEncoding=utf8
+    url: jdbc:mysql://127.0.0.1:3306/shop?useSSL=true&nullNamePatternMatchesAll=true&serverTimezone=GMT%2B8&useUnicode=true&characterEncoding=utf8
     # 数据库连接用户
     username: root
     # 数据库连接密码
@@ -53,7 +51,6 @@ spring:
       validation-timeout: 5000
       # 设置连接在连接池中的存货时间 如果不等于0且小于30秒则会被重置回30分钟
       max-lifetime: 1800000
-
 # 通用mapper
 mapper:
   mappers: tk.mybatis.mapper.common.Mapper
@@ -70,6 +67,9 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
 
 shop:
+  worker:
+    workerId: 1 # 项目唯一标识
+    datacenterId: 1 # 序列号 其实也是唯一标识
   jwt:
     pubKeyPath: D:\feiq\RecvFiles\6_month\shop\token\rea.pub # 公钥地址(私钥加密,公钥解密)
     cookieName: SHOP_TOKEN
