@@ -28,7 +28,7 @@ public interface UserAddressService {
 
     @ApiOperation(value = "通过Id查询地址")
     @GetMapping(value = "user/selectAddressById")
-    Result<UserAddressEntity> selectAddressById(@RequestParam Integer id);
+    Result<UserAddressEntity> selectAddressById(Integer id);
 
 
     @ApiOperation(value = "新增地址")

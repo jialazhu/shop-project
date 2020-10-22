@@ -6,6 +6,7 @@ import com.baidu.shop.constant.MqMessageConstant;
 import com.baidu.shop.dto.BrandDTO;
 import com.baidu.shop.dto.SkuDTO;
 import com.baidu.shop.dto.SpuDTO;
+import com.baidu.shop.dto.StockDTO;
 import com.baidu.shop.entity.*;
 import com.baidu.shop.mapper.*;
 import com.baidu.shop.service.BaseApiService;
@@ -70,6 +71,12 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
     //事务注解
     @Autowired
     TransactionDefinition transactionDefinition;*/
+
+    @Override
+    public Result<JsonObject> updateStock(StockDTO stockDTO) {
+        stockMapper.updateStock(stockDTO.getSkuId(),stockDTO.getStock());
+        return this.setResultSuccess();
+    }
 
     @Override
     public Result<SkuEntity> getSkuBySkuId(Long skuId) {

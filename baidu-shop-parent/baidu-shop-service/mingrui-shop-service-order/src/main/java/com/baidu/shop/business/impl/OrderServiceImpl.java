@@ -4,13 +4,12 @@ import com.baidu.shop.base.Result;
 import com.baidu.shop.business.OrderService;
 import com.baidu.shop.config.JwtConfig;
 import com.baidu.shop.constant.ShopConstant;
-import com.baidu.shop.dto.Car;
-import com.baidu.shop.dto.OrderDTO;
-import com.baidu.shop.dto.UserInfo;
+import com.baidu.shop.dto.*;
 import com.baidu.shop.entity.OrderDetailEntity;
 import com.baidu.shop.entity.OrderEntity;
 import com.baidu.shop.entity.OrderStatusEntity;
 import com.baidu.shop.entity.UserAddressEntity;
+import com.baidu.shop.feign.GoodsFeign;
 import com.baidu.shop.feign.UserAddressFeign;
 import com.baidu.shop.mapper.OrderDetailMapper;
 import com.baidu.shop.mapper.OrderMapper;
@@ -18,20 +17,26 @@ import com.baidu.shop.mapper.OrderStatusMapper;
 import com.baidu.shop.redis.repository.RedisRepository;
 import com.baidu.shop.service.BaseApiService;
 import com.baidu.shop.status.HTTPStatus;
+import com.baidu.shop.utils.BeanUtil;
 import com.baidu.shop.utils.IdWorker;
 import com.baidu.shop.utils.JwtUtils;
 import com.baidu.shop.utils.ObjectUtil;
+import com.google.gson.JsonObject;
+import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.bind.annotation.RestController;
+import tk.mybatis.mapper.entity.Example;
 
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
+@Slf4j
 public class OrderServiceImpl extends BaseApiService implements OrderService {
 
     @Resource
@@ -55,10 +60,30 @@ public class OrderServiceImpl extends BaseApiService implements OrderService {
     @Resource
     private UserAddressFeign userAddressFeign;
 
+    @Resource
+    private GoodsFeign goodsFeign;
+
     @Override
-    public Result<OrderEntity> getOrderById(String orderId) {
+    public Result<JSONObject> updateOrderStatus(OrderStatusEntity orderStatusEntity) {
+        orderStatusMapper.updateByPrimaryKeySelective(orderStatusEntity);
+        return this.setResultSuccess();
+    }
+
+    @Override
+    public Result<OrderInfo> getOrderById(String orderId) {
         OrderEntity orderEntity = orderMapper.selectByPrimaryKey(orderId);
-        return this.setResultSuccess(orderEntity);
+        OrderInfo orderInfo = BeanUtil.copyProperties(orderEntity, OrderInfo.class);
+
+        Example example = new Example(OrderDetailEntity.class);
+        example.createCriteria().andEqualTo("orderId",orderId);
+        List<OrderDetailEntity> orderDetailEntities = orderDetailMapper.selectByExample(example);
+
+        orderInfo.setOrderDetailList(orderDetailEntities);
+
+        OrderStatusEntity orderStatusEntity = orderStatusMapper.selectByPrimaryKey(orderId);
+        orderInfo.setOrderStatusEntity(orderStatusEntity);
+
+        return this.setResultSuccess(orderInfo);
     }
 
     @Transactional
@@ -77,11 +102,12 @@ public class OrderServiceImpl extends BaseApiService implements OrderService {
                 orderEntity.setActualPay(k.get(0)); //实际总价
                 OrderDetailEntityMap.put("orderDetailEntityList",v);
             });
+            List<OrderDetailEntity> orderDetailEntityList = OrderDetailEntityMap.get("orderDetailEntityList");
             //获得订单状态类
             OrderStatusEntity orderStatusEntity = this.getOrderStatus(orderId, date);
             //数据入库
             orderMapper.insertSelective(orderEntity);
-            orderDetailMapper.insertList(OrderDetailEntityMap.get("orderDetailEntityList"));
+            orderDetailMapper.insertList(orderDetailEntityList);
             orderStatusMapper.insertSelective(orderStatusEntity);
             //当前事务提交后执行的方法
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
@@ -89,6 +115,16 @@ public class OrderServiceImpl extends BaseApiService implements OrderService {
                 public void afterCommit() {
                     Arrays.asList(orderDTO.getSkuIds().split(",")).stream().forEach(skuId->{
                         redisRepository.delHash(ShopConstant.REDIS_CAR_PRE+info.getId(),skuId);
+                        //订单生成成功 减去库存.
+                        orderDetailEntityList.stream().forEach(good ->{
+                            StockDTO stockDTO = new StockDTO();
+                            stockDTO.setSkuId(good.getSkuId());
+                            stockDTO.setStock(good.getNum());
+                            Result<JsonObject> result = goodsFeign.updateStock(stockDTO);
+                            if(result.getCode() == 200) log.debug("订单生成成功.商品Id:{} 库存数量{} 删减失败",good.getSkuId(),good.getNum());
+                        });
+
+                        //发送延迟队列 查询订单是否支付成功
                     });
                 }
             });
