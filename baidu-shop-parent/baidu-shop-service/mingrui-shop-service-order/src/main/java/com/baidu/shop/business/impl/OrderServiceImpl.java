@@ -113,19 +113,20 @@ public class OrderServiceImpl extends BaseApiService implements OrderService {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                 @Override
                 public void afterCommit() {
+                    //删除redis购物车中信息.
                     Arrays.asList(orderDTO.getSkuIds().split(",")).stream().forEach(skuId->{
                         redisRepository.delHash(ShopConstant.REDIS_CAR_PRE+info.getId(),skuId);
-                        //订单生成成功 减去库存.
-                        orderDetailEntityList.stream().forEach(good ->{
-                            StockDTO stockDTO = new StockDTO();
-                            stockDTO.setSkuId(good.getSkuId());
-                            stockDTO.setStock(good.getNum());
-                            Result<JsonObject> result = goodsFeign.updateStock(stockDTO);
-                            if(result.getCode() == 200) log.debug("订单生成成功.商品Id:{} 库存数量{} 删减失败",good.getSkuId(),good.getNum());
-                        });
-
-                        //发送延迟队列 查询订单是否支付成功
                     });
+                    //订单生成成功 减去库存.
+                    orderDetailEntityList.stream().forEach(good ->{
+                        StockDTO stockDTO = new StockDTO();
+                        stockDTO.setSkuId(good.getSkuId());
+                        stockDTO.setStock(good.getNum());
+                        Result<JsonObject> result = goodsFeign.updateStock(stockDTO);
+                        if(result.getCode() == 200) log.debug("订单生成成功.商品Id:{} 库存数量{} 删减失败",good.getSkuId(),good.getNum());
+                    });
+                    //发送延迟队列 查询订单是否支付成功
+
                 }
             });
             return this.setResult(HTTPStatus.OK,"",orderId+""); //将订单id变为字符串.防止前台编译导致精度丢失

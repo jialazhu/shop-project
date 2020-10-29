@@ -96,7 +96,7 @@ public class ApiTemplateServiceImpl extends BaseApiService implements ApiTemplat
             writer = new PrintWriter(file ,"UTF-8");
             //根据模板生成静态文件
             //param1:模板名称 params2:模板上下文[上下文中包含了需要填充的数据],文件输出流
-            templateEngine.process("item",context,writer);
+            templateEngine.process("item1",context,writer);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (UnsupportedEncodingException e) {

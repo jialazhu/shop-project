@@ -120,7 +120,7 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
             categoryList = entry.getValue();
         }
         // 根据热点cid 返回热点分类能用于 搜索 的规格和具体范围
-        HashMap<String, List<String>> paramAndValueMap = this.getHotParamAndValueByHotCid(hotCid, search);
+        Map<String, List<String>> paramAndValueMap = this.getHotParamAndValueByHotCid(hotCid, search);
 
         return new EsResponse(total,totalPage,brandList,categoryList,goodsDocs,paramAndValueMap);
     }
@@ -131,14 +131,14 @@ public class ElasticsearchServiceImpl extends BaseApiService implements Elastics
      * @param search
      * @return
      */
-    private HashMap<String, List<String>> getHotParamAndValueByHotCid(Integer hotCid , String search){
+    private Map<String, List<String>> getHotParamAndValueByHotCid(Integer hotCid , String search){
         //通过热门cid去查询规格
         SpecParamDTO paramDTO = new SpecParamDTO();
         paramDTO.setCid(hotCid);
         paramDTO.setSearching(true);
         // 查询出来的规格结果集
         Result<List<SpecParamEntity>> paramResult = specificationFeign.selectParam(paramDTO);
-        HashMap<String, List<String>> map = new HashMap<>();
+        Map<String, List<String>> map = new HashMap<>();
         if(paramResult.getCode() == 200){
             // 构建 es查询条件
             NativeSearchQueryBuilder searchQueryBuilder = new NativeSearchQueryBuilder();

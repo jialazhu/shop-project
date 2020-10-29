@@ -8,8 +8,8 @@ import com.baidu.shop.status.HTTPStatus;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @ClassName EsResponse
@@ -30,9 +30,9 @@ public class EsResponse extends Result<List<GoodsDoc>> {
 
     private List<CategoryEntity> categoryList;
 
-    private HashMap<String, List<String>> paramAndValueMap;
+    private Map<String, List<String>> paramAndValueMap;
 
-    public EsResponse(Long total, Long totalPage, List<BrandEntity> brandList, List<CategoryEntity> categoryList , List<GoodsDoc> goodsDocs,  HashMap<String, List<String>> paramAndValueMap) {
+    public EsResponse(Long total, Long totalPage, List<BrandEntity> brandList, List<CategoryEntity> categoryList , List<GoodsDoc> goodsDocs,  Map<String, List<String>> paramAndValueMap) {
         super(HTTPStatus.OK, HTTPStatus.OK+"", goodsDocs);
         this.total = total;
         this.totalPage = totalPage;

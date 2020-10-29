@@ -21,6 +21,7 @@
         <module>mingrui-shop-service-car</module>
         <module>mingrui-shop-service-order</module>
         <module>mingrui-shop-service-pay</module>
+        <module>baidu-shop-service-miaosha</module>
     </modules>
 
     <dependencies>
